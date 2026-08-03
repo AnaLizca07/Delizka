@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<{ email?: string; nombre?: string; rol?: string; zonaId?: string | null }>(event)
   const { email, nombre, rol, zonaId } = body ?? {}
 
-  if (!email || !nombre || !rol || !ROLES_VALIDOS.includes(rol as any)) {
+  if (!email || !nombre || !rol || !(ROLES_VALIDOS as readonly string[]).includes(rol)) {
     throw createError({ statusCode: 400, statusMessage: 'email, nombre y rol (admin/gerente/vendedor) son requeridos' })
   }
   if (rol === 'vendedor' && !zonaId) {

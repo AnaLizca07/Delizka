@@ -1,4 +1,5 @@
 import type { ProductoCatalogo } from '~/composables/useCatalogo'
+import { calcularIva, calcularSubtotal, calcularTotal, validarAgregarStock, validarActualizarCantidad } from '~/utils/pedidoCalculos'
 
 export interface LineaAutoPedido {
   inventarioId: string
@@ -19,11 +20,9 @@ export function useAutoPedido() {
   const client = useSupabaseClient()
   const { miCliente } = useMiCliente()
 
-  const subtotal = computed(() =>
-    lineas.value.reduce((acc, l) => acc + l.cantidad * l.precioUnitario, 0)
-  )
-  const iva = computed(() => Math.round(subtotal.value * ivaTarifa.value * 100) / 100)
-  const total = computed(() => subtotal.value + iva.value)
+  const subtotal = computed(() => calcularSubtotal(lineas.value))
+  const iva = computed(() => calcularIva(subtotal.value, ivaTarifa.value))
+  const total = computed(() => calcularTotal(subtotal.value, iva.value))
 
   async function cargarIvaTarifa() {
     const { data } = await client.rpc('iva_tarifa_vigente')
@@ -33,9 +32,8 @@ export function useAutoPedido() {
   function agregar(producto: ProductoCatalogo, cantidad: number) {
     const existente = lineas.value.find((l) => l.inventarioId === producto.id)
     const cantidadPrevia = existente?.cantidad ?? 0
-    if (cantidadPrevia + cantidad > producto.stockDisponible) {
-      return { ok: false, mensaje: `Solo hay ${producto.stockDisponible} unidades disponibles de ${producto.codigo}.` }
-    }
+    const validacion = validarAgregarStock(cantidadPrevia, cantidad, producto.stockDisponible, producto.codigo)
+    if (!validacion.ok) return validacion
     if (existente) {
       existente.cantidad += cantidad
     } else {
@@ -58,9 +56,8 @@ export function useAutoPedido() {
   function actualizarCantidad(inventarioId: string, cantidad: number) {
     const linea = lineas.value.find((l) => l.inventarioId === inventarioId)
     if (!linea) return { ok: true }
-    if (cantidad > linea.stockDisponible) {
-      return { ok: false, mensaje: `Solo hay ${linea.stockDisponible} unidades disponibles de ${linea.codigo}.` }
-    }
+    const validacion = validarActualizarCantidad(cantidad, linea.stockDisponible, linea.codigo)
+    if (!validacion.ok) return validacion
     linea.cantidad = cantidad
     return { ok: true }
   }

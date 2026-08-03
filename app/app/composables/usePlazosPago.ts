@@ -1,4 +1,7 @@
-export interface PlazoPago {
+// Nombre distinto al `PlazoPago` de useClientes.ts (mismo concepto, pero ese
+// no trae `activo` — evita que el auto-import de Nuxt tenga que desempatar
+// dos interfaces con el mismo nombre y distinto shape.
+export interface PlazoPagoAdmin {
   id: string
   dias: number
   etiqueta: string
@@ -8,12 +11,12 @@ export interface PlazoPago {
 export function usePlazosPago() {
   const client = useSupabaseClient()
 
-  async function listar(): Promise<PlazoPago[]> {
+  async function listar(): Promise<PlazoPagoAdmin[]> {
     const { data } = await client
       .from('plazos_pago')
       .select('id, dias, etiqueta, activo')
       .order('dias')
-    return (data ?? []) as PlazoPago[]
+    return (data ?? []) as PlazoPagoAdmin[]
   }
 
   async function crear(payload: { dias: number; etiqueta: string }) {

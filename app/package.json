@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@nuxtjs/supabase": "^2.0.9",
@@ -20,8 +22,11 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@nuxt/eslint": "^1.16.0",
     "@types/leaflet": "^1.9.21",
     "@types/web-push": "^3.6.4",
+    "eslint": "^10.8.0",
+    "vitest": "^4.1.10",
     "workbox-precaching": "^7.4.1"
   }
 }

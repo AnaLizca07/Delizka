@@ -10,7 +10,7 @@ precacheAndRoute(self.__WB_MANIFEST)
 // aunque la pestaña de Delizka esté cerrada — por eso este handler vive aquí y
 // no en un composable normal.
 self.addEventListener('push', (event) => {
-  let datos: { title?: string; body?: string; url?: string } = {}
+  let datos: { title?: string; body?: string; url?: string }
   try {
     datos = event.data?.json() ?? {}
   } catch {

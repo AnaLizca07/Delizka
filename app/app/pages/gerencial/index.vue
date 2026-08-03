@@ -54,8 +54,8 @@ async function enviarPrueba() {
   try {
     await $fetch('/api/push/prueba', { method: 'POST' })
     mensajePush.value = { tipo: 'ok', texto: 'Notificación de prueba enviada.' }
-  } catch (e: any) {
-    mensajePush.value = { tipo: 'error', texto: e?.data?.statusMessage ?? 'No se pudo enviar la prueba.' }
+  } catch (e) {
+    mensajePush.value = { tipo: 'error', texto: mensajeDeError(e, 'No se pudo enviar la prueba.') }
   }
   enviandoPrueba.value = false
 }

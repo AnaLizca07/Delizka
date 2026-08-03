@@ -84,8 +84,8 @@ async function generarCredenciales() {
     credenciales.value = { email: resp.email, password: resp.password }
     if (cliente.value) cliente.value.perfil_id = 'pendiente' // solo para ocultar el botón; se refresca abajo
     await cargar()
-  } catch (e: any) {
-    errorCredenciales.value = e?.data?.statusMessage ?? 'No se pudieron generar las credenciales.'
+  } catch (e) {
+    errorCredenciales.value = mensajeDeError(e, 'No se pudieron generar las credenciales.')
   }
   generando.value = false
 }

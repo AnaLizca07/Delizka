@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { PlazoPago } from '~/composables/usePlazosPago'
+import type { PlazoPagoAdmin } from '~/composables/usePlazosPago'
 
 const { listar, crear, actualizar, actualizarActivo } = usePlazosPago()
 
-const plazos = ref<PlazoPago[]>([])
+const plazos = ref<PlazoPagoAdmin[]>([])
 const cargando = ref(true)
 
 const dias = ref<number | null>(null)
@@ -45,7 +45,7 @@ async function guardar() {
   await cargar()
 }
 
-function empezarEdicion(p: PlazoPago) {
+function empezarEdicion(p: PlazoPagoAdmin) {
   editandoId.value = p.id
   diasEdit.value = p.dias
   etiquetaEdit.value = p.etiqueta
@@ -78,7 +78,7 @@ async function guardarEdicion(id: string) {
   await cargar()
 }
 
-async function alternarActivo(p: PlazoPago) {
+async function alternarActivo(p: PlazoPagoAdmin) {
   await actualizarActivo(p.id, !p.activo)
   p.activo = !p.activo
 }

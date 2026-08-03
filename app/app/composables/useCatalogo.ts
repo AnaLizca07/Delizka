@@ -25,7 +25,7 @@ export function useCatalogo() {
     const ids = productos.map((p) => p.id)
     const { data: disponibilidad } = await client.rpc('stock_disponible', { p_inventario_ids: ids })
     const disponiblePorId = new Map(
-      (disponibilidad ?? []).map((d: any) => [d.inventario_id, Number(d.stock_disponible)])
+      (disponibilidad ?? []).map((d: { inventario_id: string; stock_disponible: number }) => [d.inventario_id, Number(d.stock_disponible)])
     )
 
     return productos.map((p) => ({

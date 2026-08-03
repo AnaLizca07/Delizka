@@ -39,8 +39,8 @@ async function guardar() {
       zonaId: rol.value === 'vendedor' ? zonaId.value : null
     })
     credenciales.value = resp
-  } catch (e: any) {
-    error.value = e?.data?.statusMessage ?? 'No se pudo crear el usuario.'
+  } catch (e) {
+    error.value = mensajeDeError(e, 'No se pudo crear el usuario.')
   }
   enviando.value = false
 }
