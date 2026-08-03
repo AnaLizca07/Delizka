@@ -1,0 +1,11 @@
+.DS_Store
+scripts/.env
+scripts/__pycache__/
+scripts/*.pyc
+
+app/node_modules/
+app/.output/
+app/.nuxt/
+app/.data/
+app/.env
+app/dist/
