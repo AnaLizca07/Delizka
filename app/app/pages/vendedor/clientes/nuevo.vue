@@ -6,6 +6,7 @@ const route = useRoute()
 const { crear, listarPlazos } = useClientes()
 const { perfil } = usePerfil()
 const { clienteId: clienteIdCarrito } = useCarrito()
+const { geocodificarDireccion } = useGeocodificacion()
 
 // Si el vendedor llegó aquí desde "Nuevo pedido" (para registrar un cliente
 // sin perder lo que ya tenía en el carrito), al guardar lo devolvemos ahí con
@@ -46,11 +47,16 @@ async function guardar() {
   }
 
   enviando.value = true
+  // RF-17: geocodificación best-effort — si falla o la dirección no se puede
+  // resolver, el cliente se crea igual sin coordenadas.
+  const coordenadas = await geocodificarDireccion(direccion.value)
   const { data, error: errorCrear } = await crear({
     nombre: nombre.value.trim(),
     identificacion: identificacion.value.trim(),
     telefono: telefono.value.trim() || undefined,
     direccion: direccion.value.trim() || undefined,
+    lat: coordenadas?.lat ?? null,
+    lng: coordenadas?.lng ?? null,
     plazo_pago_id: plazoPagoId.value,
     zona_id: perfil.value.zona_id,
     vendedor_id: userData.user.id

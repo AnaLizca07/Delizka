@@ -2,11 +2,17 @@
 import type { VentaPorVendedor, ProductoMasVendido, AlertaCartera } from '~/composables/useKpisGerenciales'
 
 const { ventasPorVendedor, productosMasVendidos, carteraVencida } = useKpisGerenciales()
+const { soportado: pushSoportado, suscripcionActual, suscribir, desuscribir } = useNotificacionesPush()
 
 const ventas = ref<VentaPorVendedor[]>([])
 const productos = ref<ProductoMasVendido[]>([])
 const alertas = ref<AlertaCartera[]>([])
 const cargando = ref(true)
+
+const pushActivo = ref(false)
+const activandoPush = ref(false)
+const mensajePush = ref<{ tipo: 'error' | 'ok'; texto: string } | null>(null)
+const enviandoPrueba = ref(false)
 
 const formatoMoneda = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
@@ -18,7 +24,41 @@ onMounted(async () => {
   productos.value = p
   alertas.value = a
   cargando.value = false
+
+  if (pushSoportado.value) {
+    pushActivo.value = !!(await suscripcionActual())
+  }
 })
+
+async function alternarPush() {
+  mensajePush.value = null
+  activandoPush.value = true
+  if (pushActivo.value) {
+    await desuscribir()
+    pushActivo.value = false
+  } else {
+    const resultado = await suscribir()
+    if (!resultado.ok) {
+      mensajePush.value = { tipo: 'error', texto: resultado.mensaje ?? 'No se pudo activar.' }
+    } else {
+      pushActivo.value = true
+      mensajePush.value = { tipo: 'ok', texto: 'Notificaciones activadas en este navegador.' }
+    }
+  }
+  activandoPush.value = false
+}
+
+async function enviarPrueba() {
+  mensajePush.value = null
+  enviandoPrueba.value = true
+  try {
+    await $fetch('/api/push/prueba', { method: 'POST' })
+    mensajePush.value = { tipo: 'ok', texto: 'Notificación de prueba enviada.' }
+  } catch (e: any) {
+    mensajePush.value = { tipo: 'error', texto: e?.data?.statusMessage ?? 'No se pudo enviar la prueba.' }
+  }
+  enviandoPrueba.value = false
+}
 </script>
 
 <template>
@@ -57,6 +97,36 @@ onMounted(async () => {
             <span class="font-medium text-slate-900">{{ p.cantidad }} u.</span>
           </li>
         </ul>
+      </div>
+
+      <div v-if="pushSoportado" class="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 class="text-sm font-semibold text-slate-900 mb-1">Notificaciones de escritorio</h2>
+        <p class="text-xs text-slate-500 mb-3">Recibe una alerta en este navegador cuando se apruebe una venta o un vendedor inicie su jornada.</p>
+        <div class="flex items-center gap-3">
+          <button
+            type="button" :disabled="activandoPush"
+            class="rounded-md text-sm px-3 py-1.5"
+            :class="pushActivo ? 'border border-slate-300 text-slate-700' : 'bg-[#1E2A6E] text-white'"
+            @click="alternarPush"
+          >
+            {{ pushActivo ? 'Desactivar' : 'Activar notificaciones' }}
+          </button>
+          <button
+            v-if="pushActivo"
+            type="button" :disabled="enviandoPrueba"
+            class="text-sm text-[#1E2A6E] hover:underline"
+            @click="enviarPrueba"
+          >
+            {{ enviandoPrueba ? 'Enviando…' : 'Enviar notificación de prueba' }}
+          </button>
+        </div>
+        <p
+          v-if="mensajePush"
+          class="text-sm mt-2"
+          :class="mensajePush.tipo === 'error' ? 'text-red-600' : 'text-emerald-600'"
+        >
+          {{ mensajePush.texto }}
+        </p>
       </div>
 
       <div class="rounded-lg border border-slate-200 bg-white p-4">

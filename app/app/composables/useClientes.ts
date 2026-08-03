@@ -4,6 +4,8 @@ export interface Cliente {
   identificacion: string
   telefono: string | null
   direccion: string | null
+  lat: number | null
+  lng: number | null
   plazo_pago_id: string | null
   perfil_id: string | null
   password_temporal_expira_at: string | null
@@ -23,6 +25,8 @@ export interface NuevoCliente {
   identificacion: string
   telefono?: string
   direccion?: string
+  lat?: number | null
+  lng?: number | null
   plazo_pago_id?: string | null
   zona_id: string
   vendedor_id: string

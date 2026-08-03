@@ -1,3 +1,18 @@
+<script setup lang="ts">
+const { registrarEvento } = useGeolocalizacion()
+
+// RF-16: "inicio de jornada" — se registra una sola vez por sesión de
+// navegación, la primera vez que el vendedor llega a su home, no en cada
+// visita a esta página.
+const jornadaIniciada = useState('jornada-geo-iniciada', () => false)
+
+onMounted(() => {
+  if (jornadaIniciada.value) return
+  jornadaIniciada.value = true
+  registrarEvento('check_in')
+})
+</script>
+
 <template>
   <div>
     <h1 class="text-lg font-semibold text-slate-900 mb-4">Vendedor</h1>

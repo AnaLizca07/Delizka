@@ -4,6 +4,15 @@ import type { Cliente, PlazoPago } from '~/composables/useClientes'
 const route = useRoute()
 const client = useSupabaseClient()
 const { obtener, listarPlazos } = useClientes()
+const { registrarEvento } = useGeolocalizacion()
+const { distanciaMetros } = useGeocodificacion()
+
+// RF-17: por encima de esto se avisa que el check-in está lejos de la
+// dirección registrada. Generoso a propósito — la dirección del cliente es
+// geocodificada de forma aproximada (RF-17), no es un pin exacto, así que un
+// umbral corto generaría falsos positivos constantes.
+const UMBRAL_LEJOS_METROS = 2000
+const avisoLejos = ref<{ metros: number } | null>(null)
 
 const cliente = ref<Cliente | null>(null)
 const plazos = ref<PlazoPago[]>([])
@@ -47,6 +56,19 @@ async function cargar() {
   cartera.value = carteraData ?? null
   pedidos.value = pedidosData ?? []
   cargando.value = false
+
+  // RF-16: abrir la ficha de un cliente es, en la práctica, el momento en que
+  // el vendedor está iniciando una visita. Best-effort, no bloquea la carga.
+  const posicion = await registrarEvento('inicio_visita', { clienteId: id })
+
+  // RF-17: si el cliente tiene coordenadas geocodificadas, avisa si el
+  // vendedor está lejos. Silencioso si no hay GPS o no hay coordenadas.
+  if (posicion && cliente.value?.lat != null && cliente.value?.lng != null) {
+    const metros = distanciaMetros(posicion, { lat: cliente.value.lat, lng: cliente.value.lng })
+    if (metros > UMBRAL_LEJOS_METROS) {
+      avisoLejos.value = { metros: Math.round(metros) }
+    }
+  }
 }
 
 onMounted(cargar)
@@ -73,6 +95,10 @@ async function generarCredenciales() {
   <div v-if="cargando" class="text-sm text-slate-400">Cargando…</div>
 
   <div v-else-if="cliente" class="max-w-2xl space-y-6">
+    <p v-if="avisoLejos" class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-900">
+      ⚠️ Estás a unos {{ Math.round(avisoLejos.metros / 100) / 10 }} km de la dirección registrada de este cliente.
+    </p>
+
     <div class="flex items-start justify-between gap-3">
       <div>
         <NuxtLink to="/vendedor/clientes" class="text-sm text-[#1E2A6E] hover:underline">← Volver a clientes</NuxtLink>

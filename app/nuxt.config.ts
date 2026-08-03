@@ -11,6 +11,21 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt'
   ],
 
+  runtimeConfig: {
+    // RF-21: solo el servidor puede firmar los envíos push (web-push).
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+    vapidSubject: process.env.VAPID_SUBJECT,
+    // Secreto compartido con el Database Webhook de Supabase que dispara los
+    // push automáticos (venta aprobada / inicio de jornada) — nunca llega al
+    // navegador, así que nadie externo puede llamar este endpoint.
+    pushWebhookSecret: process.env.PUSH_WEBHOOK_SECRET,
+    public: {
+      // Segura de exponer: la llave pública VAPID identifica al remitente,
+      // no autoriza nada por sí sola.
+      vapidPublicKey: process.env.VAPID_PUBLIC_KEY
+    }
+  },
+
   supabase: {
     redirectOptions: {
       login: '/login',
@@ -30,6 +45,12 @@ export default defineNuxtConfig({
   },
 
   pwa: {
+    // injectManifest (en vez de generateSW) porque RF-21 necesita un service
+    // worker con lógica propia (evento 'push' / 'notificationclick'), no solo
+    // el precacheo automático que genera Workbox por defecto.
+    strategies: 'injectManifest',
+    srcDir: 'service-worker',
+    filename: 'sw.ts',
     registerType: 'autoUpdate',
     manifest: {
       name: 'Delizka',
@@ -45,8 +66,9 @@ export default defineNuxtConfig({
         { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
       ]
     },
-    workbox: {
-      navigateFallback: '/',
+    // `workbox.navigateFallback` no aplica con injectManifest (eso era para
+    // generateSW); qué precachear ahora se controla desde `injectManifest`.
+    injectManifest: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico}']
     },
     client: {

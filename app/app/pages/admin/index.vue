@@ -20,9 +20,15 @@
       >
         Zonas
       </NuxtLink>
+      <NuxtLink
+        to="/admin/plazos"
+        class="inline-flex items-center rounded-lg border border-slate-300 text-slate-700 text-sm font-medium px-4 py-2.5"
+      >
+        Plazos de pago
+      </NuxtLink>
     </div>
     <p class="text-sm text-slate-500 mt-4">
-      Reglas de plazo de pago (RF-22) y configuración de la conexión ODBC (RF-24) van más adelante.
+      Configuración de la conexión ODBC (RF-24) va más adelante, junto con el agente de sincronización.
     </p>
   </div>
 </template>

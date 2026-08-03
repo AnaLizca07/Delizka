@@ -17,6 +17,7 @@ export function useCarrito() {
 
   const client = useSupabaseClient()
   const { perfil } = usePerfil()
+  const { registrarEvento } = useGeolocalizacion()
 
   const subtotal = computed(() =>
     lineas.value.reduce((acc, l) => acc + l.cantidad * l.precioUnitario, 0)
@@ -126,6 +127,10 @@ export function useCarrito() {
         pedidoId: pedido.id
       }
     }
+
+    // RF-16: no se espera esta llamada — el vendedor no debería notar demora
+    // en la confirmación de su pedido por culpa del GPS.
+    registrarEvento('envio_pedido', { clienteId: clienteId.value, pedidoId: pedido.id })
 
     limpiar()
     return { ok: true, pedidoId: pedido.id }

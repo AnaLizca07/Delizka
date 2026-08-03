@@ -16,9 +16,12 @@
     "leaflet": "^1.9.4",
     "nuxt": "^4.5.0",
     "vue": "^3.5.40",
-    "vue-router": "^5.2.0"
+    "vue-router": "^5.2.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.21"
+    "@types/leaflet": "^1.9.21",
+    "@types/web-push": "^3.6.4",
+    "workbox-precaching": "^7.4.1"
   }
 }

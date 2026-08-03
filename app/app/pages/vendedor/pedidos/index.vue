@@ -2,11 +2,16 @@
 import type { PedidoVendedor } from '~/composables/useMisPedidosVendedor'
 import { ETIQUETA_ESTADO } from '~/composables/useAuditoria'
 
-const { listar } = useMisPedidosVendedor()
+const { listar, actualizarCantidadLinea, eliminarLinea, aprobar, cancelar } = useMisPedidosVendedor()
 const pedidos = ref<PedidoVendedor[]>([])
 const cargando = ref(true)
 const expandidoId = ref<string | null>(null)
 const filtroEstado = ref<string>('todos')
+
+const accionando = reactive<Record<string, boolean>>({})
+const errorPorPedido = reactive<Record<string, string | null>>({})
+const mostrarCancelar = reactive<Record<string, boolean>>({})
+const motivoPorPedido = reactive<Record<string, string>>({})
 
 const formatoMoneda = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 const formatoFecha = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
@@ -31,16 +36,75 @@ function alternarExpandido(id: string) {
   expandidoId.value = expandidoId.value === id ? null : id
 }
 
-onMounted(async () => {
+async function cargar() {
   pedidos.value = await listar()
+}
+
+onMounted(async () => {
+  await cargar()
   cargando.value = false
 })
+
+async function cambiarCantidad(pedidoId: string, lineaId: string, cantidad: number) {
+  if (cantidad < 1) return
+  errorPorPedido[pedidoId] = null
+  const { error } = await actualizarCantidadLinea(lineaId, cantidad)
+  if (error) {
+    errorPorPedido[pedidoId] = 'No se pudo actualizar la cantidad.'
+    return
+  }
+  await cargar()
+}
+
+async function quitarLinea(pedidoId: string, lineaId: string) {
+  errorPorPedido[pedidoId] = null
+  const { error } = await eliminarLinea(lineaId)
+  if (error) {
+    errorPorPedido[pedidoId] = 'No se pudo quitar el producto.'
+    return
+  }
+  await cargar()
+}
+
+async function aprobarPedido(pedidoId: string) {
+  errorPorPedido[pedidoId] = null
+  accionando[pedidoId] = true
+  const { error } = await aprobar(pedidoId)
+  accionando[pedidoId] = false
+  if (error) {
+    errorPorPedido[pedidoId] = error.message.includes('stock')
+      ? 'Ya no hay stock suficiente para aprobar este pedido tal como está. Ajusta las cantidades e intenta de nuevo.'
+      : 'No se pudo aprobar el pedido.'
+    return
+  }
+  await cargar()
+}
+
+async function confirmarCancelacion(pedidoId: string) {
+  const motivo = (motivoPorPedido[pedidoId] ?? '').trim()
+  if (!motivo) {
+    errorPorPedido[pedidoId] = 'Escribe un motivo para cancelar el pedido.'
+    return
+  }
+  errorPorPedido[pedidoId] = null
+  accionando[pedidoId] = true
+  const { error } = await cancelar(pedidoId, motivo)
+  accionando[pedidoId] = false
+  if (error) {
+    errorPorPedido[pedidoId] = 'No se pudo cancelar el pedido.'
+    return
+  }
+  mostrarCancelar[pedidoId] = false
+  await cargar()
+}
 </script>
 
 <template>
   <div class="max-w-3xl">
     <h1 class="text-lg font-semibold text-slate-900 mb-1">Mis pedidos</h1>
-    <p class="text-sm text-slate-500 mb-4">Pedidos que has creado, con su estado actual.</p>
+    <p class="text-sm text-slate-500 mb-4">
+      Pedidos que has creado y auto-pedidos de tus clientes. Los que están pendientes de aprobación puedes editarlos, aprobarlos o cancelarlos aquí.
+    </p>
 
     <select
       v-model="filtroEstado"
@@ -79,17 +143,68 @@ onMounted(async () => {
                 <th class="font-normal py-1">Descripción</th>
                 <th class="font-normal py-1 text-right">Cant.</th>
                 <th class="font-normal py-1 text-right">Precio</th>
+                <th v-if="p.estado === 'pendiente_aprobacion'" class="font-normal py-1 w-6" />
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(l, i) in p.lineas" :key="i" class="border-t border-slate-100">
+              <tr v-for="l in p.lineas" :key="l.id" class="border-t border-slate-100">
                 <td class="py-1 text-slate-700">{{ l.codigo_producto }}</td>
                 <td class="py-1 text-slate-700">{{ l.descripcion }}</td>
-                <td class="py-1 text-right text-slate-700">{{ l.cantidad }}</td>
+                <td class="py-1 text-right text-slate-700">
+                  <input
+                    v-if="p.estado === 'pendiente_aprobacion'"
+                    type="number" min="1" :value="l.cantidad"
+                    class="w-16 rounded-md border border-slate-300 px-2 py-0.5 text-right"
+                    @change="cambiarCantidad(p.id, l.id, Number(($event.target as HTMLInputElement).value))"
+                  >
+                  <span v-else>{{ l.cantidad }}</span>
+                </td>
                 <td class="py-1 text-right text-slate-700">{{ formatoMoneda.format(l.precio_unitario) }}</td>
+                <td v-if="p.estado === 'pendiente_aprobacion'" class="py-1 text-right">
+                  <button type="button" class="text-slate-400 hover:text-red-600" @click="quitarLinea(p.id, l.id)">✕</button>
+                </td>
               </tr>
             </tbody>
           </table>
+
+          <div v-if="p.estado === 'pendiente_aprobacion'" class="mt-3 pt-3 border-t border-slate-100">
+            <div v-if="mostrarCancelar[p.id]" class="flex items-end gap-2">
+              <div class="flex-1">
+                <label class="block text-xs text-slate-500 mb-1">Motivo de cancelación</label>
+                <input
+                  v-model="motivoPorPedido[p.id]" type="text"
+                  class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                >
+              </div>
+              <button
+                type="button" :disabled="accionando[p.id]"
+                class="rounded-md bg-red-600 text-white text-sm px-3 py-1.5 disabled:opacity-60"
+                @click="confirmarCancelacion(p.id)"
+              >
+                Confirmar cancelación
+              </button>
+              <button type="button" class="text-sm text-slate-500 px-2 py-1.5" @click="mostrarCancelar[p.id] = false">
+                Volver
+              </button>
+            </div>
+            <div v-else class="flex items-center gap-2">
+              <button
+                type="button" :disabled="accionando[p.id] || !p.lineas.length"
+                class="rounded-md bg-[#1E2A6E] text-white text-sm px-3 py-1.5 disabled:opacity-60"
+                @click="aprobarPedido(p.id)"
+              >
+                {{ accionando[p.id] ? 'Aprobando…' : 'Aprobar pedido' }}
+              </button>
+              <button
+                type="button" :disabled="accionando[p.id]"
+                class="rounded-md border border-slate-300 text-slate-700 text-sm px-3 py-1.5"
+                @click="mostrarCancelar[p.id] = true"
+              >
+                Cancelar pedido
+              </button>
+            </div>
+            <p v-if="errorPorPedido[p.id]" class="text-sm text-red-600 mt-2">{{ errorPorPedido[p.id] }}</p>
+          </div>
         </div>
       </li>
     </ul>
