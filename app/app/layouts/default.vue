@@ -37,7 +37,9 @@ const NAV_POR_ROL: Record<RolUsuario, { to: string; etiqueta: string; icono?: st
     { to: '/vendedor/clientes', etiqueta: 'Clientes', icono: 'clientes' }
   ],
   cliente: [
-    { to: '/cliente', etiqueta: 'Inicio' }
+    { to: '/cliente', etiqueta: 'Inicio', icono: 'inicio' },
+    { to: '/cliente/pedido-nuevo', etiqueta: 'Pedido', icono: 'pedido' },
+    { to: '/cliente/pedidos', etiqueta: 'Pedidos', icono: 'pedidos' }
   ]
 }
 
@@ -61,7 +63,7 @@ async function salir() {
   await navigateTo('/login')
 }
 
-const esVendedorMovil = computed(() => perfil.value?.rol === 'vendedor')
+const usaNavInferior = computed(() => perfil.value?.rol === 'vendedor' || perfil.value?.rol === 'cliente')
 </script>
 
 <template>
@@ -86,7 +88,7 @@ const esVendedorMovil = computed(() => perfil.value?.rol === 'vendedor')
           <button class="text-[#1E2A6E] hover:underline" @click="salir">Salir</button>
         </div>
       </div>
-      <nav v-if="nav.length && !esVendedorMovil" class="sm:hidden flex items-center gap-4 px-4 pb-3 overflow-x-auto">
+      <nav v-if="nav.length && !usaNavInferior" class="sm:hidden flex items-center gap-4 px-4 pb-3 overflow-x-auto">
         <NuxtLink
           v-for="n in nav" :key="n.to" :to="n.to"
           class="text-sm whitespace-nowrap"
@@ -96,9 +98,9 @@ const esVendedorMovil = computed(() => perfil.value?.rol === 'vendedor')
         </NuxtLink>
       </nav>
     </header>
-    <main class="mx-auto max-w-5xl px-4 py-6" :class="{ 'pb-24 sm:pb-6': esVendedorMovil }">
+    <main class="mx-auto max-w-5xl px-4 py-6" :class="{ 'pb-24 sm:pb-6': usaNavInferior }">
       <slot />
     </main>
-    <NavInferior v-if="esVendedorMovil" :items="nav" :activo="esRutaActiva" />
+    <NavInferior v-if="usaNavInferior" :items="nav" :activo="esRutaActiva" />
   </div>
 </template>

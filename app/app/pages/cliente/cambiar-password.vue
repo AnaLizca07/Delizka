@@ -40,8 +40,12 @@ async function guardar() {
 
 <template>
   <div class="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-    <form class="w-full max-w-sm bg-white rounded-xl border border-slate-200 p-8 shadow-sm" @submit.prevent="guardar">
-      <h1 class="text-xl font-semibold text-[#1E2A6E] mb-1">Delizka</h1>
+    <form class="w-full max-w-sm bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm" @submit.prevent="guardar">
+      <div class="bg-[#0B1220] px-8 py-6">
+        <h1 class="text-xl font-semibold text-white">Delizka</h1>
+        <p class="text-xs uppercase tracking-wide text-slate-400 mt-1">Portal del cliente</p>
+      </div>
+      <div class="px-8 pt-6 pb-8">
       <p class="text-sm text-slate-500 mb-6">Por seguridad, define una contraseña nueva para tu cuenta.</p>
 
       <label class="block text-sm font-medium text-slate-700 mb-1" for="password">Contraseña nueva</label>
@@ -64,6 +68,7 @@ async function guardar() {
       >
         {{ enviando ? 'Guardando…' : 'Guardar y continuar' }}
       </button>
+      </div>
     </form>
   </div>
 </template>
