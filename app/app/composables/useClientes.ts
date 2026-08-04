@@ -4,6 +4,7 @@ export interface Cliente {
   identificacion: string
   telefono: string | null
   direccion: string | null
+  email: string | null
   lat: number | null
   lng: number | null
   plazo_pago_id: string | null
@@ -25,6 +26,7 @@ export interface NuevoCliente {
   identificacion: string
   telefono?: string
   direccion?: string
+  email?: string
   lat?: number | null
   lng?: number | null
   plazo_pago_id?: string | null

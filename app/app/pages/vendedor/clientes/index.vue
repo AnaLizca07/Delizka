@@ -44,8 +44,11 @@ onMounted(async () => {
 
     <ul v-else class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
       <li v-for="c in filtrados" :key="c.id">
-        <NuxtLink :to="`/vendedor/clientes/${c.id}`" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
-          <div class="min-w-0">
+        <NuxtLink :to="`/vendedor/clientes/${c.id}`" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
+          <span class="shrink-0 w-9 h-9 rounded-full bg-[#1E2A6E]/10 text-[#1E2A6E] text-sm font-semibold flex items-center justify-center">
+            {{ c.nombre.charAt(0).toUpperCase() }}
+          </span>
+          <div class="min-w-0 flex-1">
             <p class="text-sm font-medium text-slate-900 truncate">{{ c.nombre }}</p>
             <p class="text-xs text-slate-500">{{ c.identificacion }}<span v-if="c.telefono"> · {{ c.telefono }}</span></p>
           </div>

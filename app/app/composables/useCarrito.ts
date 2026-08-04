@@ -125,9 +125,11 @@ export function useCarrito() {
       }
     }
 
-    // RF-16: no se espera esta llamada — el vendedor no debería notar demora
-    // en la confirmación de su pedido por culpa del GPS.
+    // RF-16 / recibo por correo: ninguna de estas dos llamadas se espera — el
+    // vendedor no debería notar demora en la confirmación de su pedido por
+    // culpa del GPS o de Brevo.
     registrarEvento('envio_pedido', { clienteId: clienteId.value, pedidoId: pedido.id })
+    $fetch('/api/pedidos/enviar-recibo', { method: 'POST', body: { pedidoId: pedido.id } }).catch(() => {})
 
     limpiar()
     return { ok: true, pedidoId: pedido.id }

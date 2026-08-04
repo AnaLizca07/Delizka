@@ -17,7 +17,7 @@ const ETIQUETA_ROL: Record<RolUsuario, string> = {
   cliente: 'Cliente'
 }
 
-const NAV_POR_ROL: Record<RolUsuario, { to: string; etiqueta: string }[]> = {
+const NAV_POR_ROL: Record<RolUsuario, { to: string; etiqueta: string; icono?: string }[]> = {
   admin: [
     { to: '/admin', etiqueta: 'Inicio' },
     { to: '/admin/pedidos', etiqueta: 'Bandeja de pedidos' },
@@ -31,10 +31,10 @@ const NAV_POR_ROL: Record<RolUsuario, { to: string; etiqueta: string }[]> = {
     { to: '/gerencial/auditoria', etiqueta: 'Auditoría' }
   ],
   vendedor: [
-    { to: '/vendedor', etiqueta: 'Inicio' },
-    { to: '/vendedor/pedido-nuevo', etiqueta: 'Nuevo pedido' },
-    { to: '/vendedor/pedidos', etiqueta: 'Mis pedidos' },
-    { to: '/vendedor/clientes', etiqueta: 'Clientes' }
+    { to: '/vendedor', etiqueta: 'Inicio', icono: 'inicio' },
+    { to: '/vendedor/pedido-nuevo', etiqueta: 'Pedido', icono: 'pedido' },
+    { to: '/vendedor/pedidos', etiqueta: 'Pedidos', icono: 'pedidos' },
+    { to: '/vendedor/clientes', etiqueta: 'Clientes', icono: 'clientes' }
   ],
   cliente: [
     { to: '/cliente', etiqueta: 'Inicio' }
@@ -60,6 +60,8 @@ async function salir() {
   await client.auth.signOut()
   await navigateTo('/login')
 }
+
+const esVendedorMovil = computed(() => perfil.value?.rol === 'vendedor')
 </script>
 
 <template>
@@ -79,12 +81,12 @@ async function salir() {
           </nav>
         </div>
         <div v-if="perfil" class="flex items-center gap-3 text-sm text-slate-600">
-          <span>{{ perfil.nombre }}</span>
-          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{{ ETIQUETA_ROL[perfil.rol] }}</span>
+          <span class="hidden sm:inline">{{ perfil.nombre }}</span>
+          <span class="hidden sm:inline rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{{ ETIQUETA_ROL[perfil.rol] }}</span>
           <button class="text-[#1E2A6E] hover:underline" @click="salir">Salir</button>
         </div>
       </div>
-      <nav v-if="nav.length" class="sm:hidden flex items-center gap-4 px-4 pb-3 overflow-x-auto">
+      <nav v-if="nav.length && !esVendedorMovil" class="sm:hidden flex items-center gap-4 px-4 pb-3 overflow-x-auto">
         <NuxtLink
           v-for="n in nav" :key="n.to" :to="n.to"
           class="text-sm whitespace-nowrap"
@@ -94,8 +96,9 @@ async function salir() {
         </NuxtLink>
       </nav>
     </header>
-    <main class="mx-auto max-w-5xl px-4 py-6">
+    <main class="mx-auto max-w-5xl px-4 py-6" :class="{ 'pb-24 sm:pb-6': esVendedorMovil }">
       <slot />
     </main>
+    <NavInferior v-if="esVendedorMovil" :items="nav" :activo="esRutaActiva" />
   </div>
 </template>

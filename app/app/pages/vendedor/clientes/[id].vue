@@ -119,6 +119,10 @@ async function generarCredenciales() {
         <p class="text-slate-900">{{ cliente.telefono || '—' }}</p>
       </div>
       <div>
+        <p class="text-slate-500">Correo</p>
+        <p class="text-slate-900">{{ cliente.email || '—' }}</p>
+      </div>
+      <div>
         <p class="text-slate-500">Dirección</p>
         <p class="text-slate-900">{{ cliente.direccion || '—' }}</p>
       </div>

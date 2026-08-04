@@ -27,6 +27,19 @@ const BADGE: Record<string, string> = {
   conflicto_stock: 'bg-red-50 text-red-700'
 }
 
+const ACENTO: Record<string, string> = {
+  pendiente_aprobacion: 'border-l-slate-400',
+  aprobado: 'border-l-blue-500',
+  pendiente_registro_wo: 'border-l-blue-500',
+  confirmado_en_wo: 'border-l-emerald-500',
+  revision_manual: 'border-l-amber-500',
+  sin_match: 'border-l-amber-500',
+  cancelado: 'border-l-slate-300',
+  conflicto_stock: 'border-l-red-500'
+}
+
+const FILTROS = computed(() => [{ clave: 'todos', etiqueta: 'Todos' }, ...Object.entries(ETIQUETA_ESTADO).map(([clave, etiqueta]) => ({ clave, etiqueta }))])
+
 const pedidosFiltrados = computed(() => {
   if (filtroEstado.value === 'todos') return pedidos.value
   return pedidos.value.filter((p) => p.estado === filtroEstado.value)
@@ -106,19 +119,27 @@ async function confirmarCancelacion(pedidoId: string) {
       Pedidos que has creado y auto-pedidos de tus clientes. Los que están pendientes de aprobación puedes editarlos, aprobarlos o cancelarlos aquí.
     </p>
 
-    <select
-      v-model="filtroEstado"
-      class="mb-4 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E2A6E]"
-    >
-      <option value="todos">Todos los estados</option>
-      <option v-for="(etiqueta, clave) in ETIQUETA_ESTADO" :key="clave" :value="clave">{{ etiqueta }}</option>
-    </select>
+    <div class="flex gap-2 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+      <button
+        v-for="f in FILTROS" :key="f.clave"
+        type="button"
+        class="shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap"
+        :class="filtroEstado === f.clave ? 'bg-[#1E2A6E] text-white' : 'bg-slate-100 text-slate-600'"
+        @click="filtroEstado = f.clave"
+      >
+        {{ f.etiqueta }}
+      </button>
+    </div>
 
     <p v-if="cargando" class="text-sm text-slate-400">Cargando…</p>
     <p v-else-if="!pedidosFiltrados.length" class="text-sm text-slate-400">No tienes pedidos todavía.</p>
 
-    <ul v-else class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
-      <li v-for="p in pedidosFiltrados" :key="p.id">
+    <ul v-else class="space-y-2 sm:space-y-0 sm:divide-y sm:divide-slate-200 sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white">
+      <li
+        v-for="p in pedidosFiltrados" :key="p.id"
+        class="rounded-lg border border-l-4 border-slate-200 bg-white sm:rounded-none sm:border-0 sm:border-l-4"
+        :class="ACENTO[p.estado] ?? 'border-l-slate-300'"
+      >
         <button type="button" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-left" @click="alternarExpandido(p.id)">
           <div class="min-w-0">
             <p class="text-sm font-medium text-slate-900 truncate">{{ p.clienteNombre }} <span class="text-slate-400 font-normal">· {{ p.clienteIdentificacion }}</span></p>

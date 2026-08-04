@@ -56,6 +56,11 @@ const mensaje = ref<{ tipo: 'error' | 'ok'; texto: string } | null>(null)
 const avisoStock = ref<string | null>(null)
 const enviando = ref(false)
 
+// En móvil, el carrito no cabe al lado de la búsqueda: se muestra como su
+// propia pantalla, abierta desde la barra fija de resumen. En escritorio
+// (sm+) esto no aplica — ahí siempre se ven los dos lado a lado, como antes.
+const vistaCarritoMovil = ref(false)
+
 let debounce: ReturnType<typeof setTimeout> | undefined
 
 watch(termino, (valor) => {
@@ -100,6 +105,7 @@ async function confirmarPedido() {
   mensaje.value = resultado.ok
     ? { tipo: 'ok', texto: 'Pedido creado y aprobado.' }
     : { tipo: 'error', texto: resultado.mensaje ?? 'No se pudo enviar el pedido.' }
+  if (resultado.ok) vistaCarritoMovil.value = false
 }
 
 const formatoMoneda = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -124,8 +130,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="grid gap-6 items-start md:grid-cols-[1fr_360px]">
-    <div>
+  <div class="sm:grid sm:gap-6 sm:items-start md:grid-cols-[1fr_360px]">
+    <div :class="vistaCarritoMovil ? 'hidden sm:block' : 'block'">
       <NuxtLink to="/vendedor" class="text-sm text-[#1E2A6E] hover:underline">← Volver</NuxtLink>
       <h1 class="text-lg font-semibold text-slate-900 mt-1 mb-4">Nuevo pedido</h1>
 
@@ -195,7 +201,7 @@ onMounted(async () => {
         Sin resultados.
       </p>
 
-      <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+      <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white mb-20 sm:mb-0">
         <li v-for="p in resultados" :key="p.id" class="flex items-center gap-3 px-4 py-3">
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-slate-900 truncate">{{ p.descripcion }}</p>
@@ -221,7 +227,13 @@ onMounted(async () => {
       </ul>
     </div>
 
-    <aside class="rounded-lg border border-slate-200 bg-white p-4 h-fit sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <aside
+      class="rounded-lg border border-slate-200 bg-white p-4 sm:h-fit sm:sticky sm:top-4 sm:max-h-[calc(100vh-2rem)] sm:overflow-y-auto"
+      :class="vistaCarritoMovil ? 'block' : 'hidden sm:block'"
+    >
+      <button type="button" class="sm:hidden text-sm text-[#1E2A6E] hover:underline mb-3" @click="vistaCarritoMovil = false">
+        ← Seguir agregando productos
+      </button>
       <h2 class="text-sm font-semibold text-slate-900 mb-3">Carrito</h2>
 
       <p v-if="!lineas.length" class="text-sm text-slate-400">Aún no has agregado productos.</p>
@@ -284,6 +296,16 @@ onMounted(async () => {
         {{ enviando ? 'Enviando…' : 'Enviar pedido' }}
       </button>
     </aside>
+
+    <button
+      v-if="lineas.length && !vistaCarritoMovil"
+      type="button"
+      class="sm:hidden fixed bottom-16 inset-x-3 z-20 flex items-center justify-between rounded-xl bg-[#1E2A6E] text-white px-4 py-3 shadow-lg"
+      @click="vistaCarritoMovil = true"
+    >
+      <span class="text-sm">{{ lineas.length }} producto{{ lineas.length === 1 ? '' : 's' }} · ver carrito</span>
+      <span class="text-sm font-semibold">{{ formatoMoneda.format(total) }}</span>
+    </button>
 
     <div
       v-if="avisoStock"

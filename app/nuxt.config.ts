@@ -20,6 +20,10 @@ export default defineNuxtConfig({
     // push automáticos (venta aprobada / inicio de jornada) — nunca llega al
     // navegador, así que nadie externo puede llamar este endpoint.
     pushWebhookSecret: process.env.PUSH_WEBHOOK_SECRET,
+    // Recibo de pedido por correo (Brevo). Solo servidor.
+    brevoApiKey: process.env.BREVO_API_KEY,
+    brevoSenderEmail: process.env.BREVO_SENDER_EMAIL,
+    brevoSenderNombre: process.env.BREVO_SENDER_NOMBRE || 'Delizka',
     public: {
       // Segura de exponer: la llave pública VAPID identifica al remitente,
       // no autoriza nada por sí sola.

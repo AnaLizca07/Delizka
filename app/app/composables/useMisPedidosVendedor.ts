@@ -79,7 +79,13 @@ export function useMisPedidosVendedor() {
   async function aprobar(pedidoId: string) {
     const { data: userData } = await client.auth.getUser()
     if (!userData.user) return { error: { message: 'No se pudo identificar tu sesión.' } }
-    return client.rpc('aprobar_pedido', { p_pedido_id: pedidoId, p_aprobado_por: userData.user.id })
+    const resultado = await client.rpc('aprobar_pedido', { p_pedido_id: pedidoId, p_aprobado_por: userData.user.id })
+    if (!resultado.error) {
+      // Recibo por correo: fire-and-forget, igual que en useCarrito — un
+      // fallo aquí no debe afectar la aprobación que ya se completó.
+      $fetch('/api/pedidos/enviar-recibo', { method: 'POST', body: { pedidoId } }).catch(() => {})
+    }
+    return resultado
   }
 
   async function cancelar(pedidoId: string, motivo: string) {
