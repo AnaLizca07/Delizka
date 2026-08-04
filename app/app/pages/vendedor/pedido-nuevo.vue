@@ -52,8 +52,9 @@ const resultados = ref<ProductoCatalogo[]>([])
 const buscando = ref(false)
 const cantidadesPorProducto = reactive<Record<string, number>>({})
 
-const mensaje = ref<{ tipo: 'error' | 'ok'; texto: string } | null>(null)
+const mensaje = ref<{ texto: string } | null>(null)
 const avisoStock = ref<string | null>(null)
+const pedidoExitoso = ref(false)
 const enviando = ref(false)
 
 // En móvil, el carrito no cabe al lado de la búsqueda: se muestra como su
@@ -102,10 +103,17 @@ async function confirmarPedido() {
   enviando.value = true
   const resultado = await enviarPedido()
   enviando.value = false
-  mensaje.value = resultado.ok
-    ? { tipo: 'ok', texto: 'Pedido creado y aprobado.' }
-    : { tipo: 'error', texto: resultado.mensaje ?? 'No se pudo enviar el pedido.' }
-  if (resultado.ok) vistaCarritoMovil.value = false
+  if (resultado.ok) {
+    vistaCarritoMovil.value = false
+    pedidoExitoso.value = true
+    return
+  }
+  mensaje.value = { texto: resultado.mensaje ?? 'No se pudo enviar el pedido.' }
+}
+
+function verMisPedidos() {
+  pedidoExitoso.value = false
+  navigateTo('/vendedor/pedidos')
 }
 
 const formatoMoneda = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -279,11 +287,7 @@ onMounted(async () => {
         class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E2A6E]"
       />
 
-      <p
-        v-if="mensaje"
-        class="mt-3 text-sm"
-        :class="mensaje.tipo === 'error' ? 'text-red-600' : 'text-emerald-600'"
-      >
+      <p v-if="mensaje" class="mt-3 text-sm text-red-600">
         {{ mensaje.texto }}
       </p>
 
@@ -321,6 +325,24 @@ onMounted(async () => {
           @click="avisoStock = null"
         >
           Entendido
+        </button>
+      </div>
+    </div>
+
+    <div
+      v-if="pedidoExitoso"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4"
+    >
+      <div class="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-xl">
+        <p class="text-4xl mb-3">✅</p>
+        <p class="text-sm font-medium text-slate-900 mb-1">¡Pedido enviado exitosamente!</p>
+        <p class="text-sm text-slate-500 mb-4">El pedido quedó creado y aprobado.</p>
+        <button
+          type="button"
+          class="w-full rounded-lg bg-[#1E2A6E] text-white text-sm font-medium py-2.5"
+          @click="verMisPedidos"
+        >
+          Ver mis pedidos
         </button>
       </div>
     </div>
