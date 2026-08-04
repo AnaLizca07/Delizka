@@ -9,6 +9,22 @@ interface LineaRecibo {
 
 const formatoMoneda = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
+// Error de $fetch (ofetch) al llamar la API de Brevo: el cuerpo de la
+// respuesta llega en `.data.message`. No hay un tipo exportado para esto,
+// así que se verifica la forma en vez de usar `any` (mismo patrón que
+// app/utils/errores.ts, pero este archivo vive en server/ y no comparte los
+// auto-imports de la app).
+function mensajeBrevo(e: unknown): string | undefined {
+  if (typeof e !== 'object' || e === null) return undefined
+  const data = (e as { data?: unknown }).data
+  if (typeof data === 'object' && data !== null) {
+    const message = (data as { message?: unknown }).message
+    if (typeof message === 'string') return message
+  }
+  const message = (e as { message?: unknown }).message
+  return typeof message === 'string' ? message : undefined
+}
+
 function armarHtml(clienteNombre: string, pedidoId: string, lineas: LineaRecibo[], subtotal: number, iva: number, total: number, notas: string | null) {
   const filas = lineas
     .map(
@@ -108,9 +124,9 @@ export default defineEventHandler(async (event) => {
       }
     })
     return { enviado: resp.status >= 200 && resp.status < 300 }
-  } catch (e: any) {
+  } catch (e) {
     // No relanzamos: quien llama no espera esta ruta, un fallo aquí no debe
     // aparecer como error al vendedor.
-    return { enviado: false, motivo: 'error_brevo', detalle: e?.data?.message ?? e?.message }
+    return { enviado: false, motivo: 'error_brevo', detalle: mensajeBrevo(e) }
   }
 })
