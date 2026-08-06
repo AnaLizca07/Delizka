@@ -2,6 +2,7 @@
 scripts/.env
 scripts/__pycache__/
 scripts/*.pyc
+supabase/.temp/
 
 app/node_modules/
 app/.output/
