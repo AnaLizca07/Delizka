@@ -20,13 +20,13 @@ const ETIQUETA_ROL: Record<RolUsuario, string> = {
 const NAV_POR_ROL: Record<RolUsuario, { to: string; etiqueta: string; icono?: string }[]> = {
   admin: [
     { to: '/admin', etiqueta: 'Inicio' },
-    { to: '/admin/pedidos', etiqueta: 'Bandeja de pedidos' },
     { to: '/admin/usuarios', etiqueta: 'Usuarios' },
     { to: '/admin/zonas', etiqueta: 'Zonas' },
     { to: '/admin/plazos', etiqueta: 'Plazos de pago' }
   ],
   gerente: [
     { to: '/gerencial', etiqueta: 'Inicio' },
+    { to: '/gerencial/pedidos', etiqueta: 'Bandeja de pedidos' },
     { to: '/gerencial/mapa', etiqueta: 'Mapa de vendedores' },
     { to: '/gerencial/auditoria', etiqueta: 'Auditoría' }
   ],
